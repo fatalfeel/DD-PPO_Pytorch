@@ -14,29 +14,6 @@ device = torch.device("cpu")
 
 '''
 **************************************************
-************ all_reduce backward grad ************
-**************************************************
-'''
-def Average_Gradient_00(model, rank):
-    size = numpy.double(torch.distributed.get_world_size())
-    for param in model.parameters():
-        #print(rank, param.grad.data, "\n")
-        torch.distributed.all_reduce(param.grad.data, op=torch.distributed.ReduceOp.SUM)
-        #print(rank, param.grad.data, "\n")
-        param.grad.data /= size
-        #print(rank, param.grad.data, "\n")
-
-def Average_Gradient_01(model, rank):
-    size = numpy.double(torch.distributed.get_world_size())
-    for param in model.parameters():
-        #print(rank, param.grad.data, "\n")
-        torch.distributed.all_reduce(param.grad.data, op=torch.distributed.ReduceOp.SUM)
-        #print(rank, param.grad.data, "\n")
-        param.grad.data /= size
-        #print(rank, param.grad.data, "\n")
-
-'''
-**************************************************
 ******************** Game Class ******************
 **************************************************
 '''
@@ -141,6 +118,15 @@ class CPPO_00:
 
         self.MseLoss = nn.MSELoss(reduction='none')
 
+    def Average_Gradient(self, model):
+        size = numpy.float64(torch.distributed.get_world_size())
+        for param in model.parameters():
+            # print(rank, param.grad.data, "\n")
+            torch.distributed.all_reduce(param.grad.data, op=torch.distributed.ReduceOp.SUM)
+            # print(rank, param.grad.data, "\n")
+            param.grad.data /= size
+            # print(rank, param.grad.data, "\n")
+
     def train_update(self, gamedata):
         returns = []
         discounted_reward = 0
@@ -200,7 +186,7 @@ class CPPO_00:
             self.optimizer.zero_grad()
             loss.mean().backward()  # get grade.data
 
-            Average_Gradient_00(self.policy_ac, rank)
+            self.Average_Gradient(self.policy_ac)
 
             self.optimizer.step()  # update grade.data by adam method which is smooth grade
 
@@ -228,6 +214,15 @@ class CPPO_01:
 
         self.MseLoss = nn.MSELoss(reduction='none')
 
+    def Average_Gradient(self, model):
+        size = numpy.float64(torch.distributed.get_world_size())
+        for param in model.parameters():
+            # print(rank, param.grad.data, "\n")
+            torch.distributed.all_reduce(param.grad.data, op=torch.distributed.ReduceOp.SUM)
+            # print(rank, param.grad.data, "\n")
+            param.grad.data /= size
+            # print(rank, param.grad.data, "\n")
+
     def train_update(self, gamedata):
         returns = []
         discounted_reward = 0
@@ -287,7 +282,7 @@ class CPPO_01:
             self.optimizer.zero_grad()
             loss.mean().backward()  # get grade.data
 
-            Average_Gradient_01(self.policy_ac, rank)
+            self.Average_Gradient(self.policy_ac)
 
             self.optimizer.step()  # update grade.data by adam method which is smooth grade
 
