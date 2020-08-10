@@ -289,7 +289,7 @@ class CPPO_01:
         # Copy new weights into old policy:
         # self.policy_curr.load_state_dict(self.policy_ac.state_dict())
 
-def LunarLander_00(rank, world_size):
+def LunarLander_00(rank):
     ############## Hyperparameters ##############
     env_name = "LunarLander-v2"
     # creating environment
@@ -375,7 +375,7 @@ def LunarLander_00(rank, world_size):
             running_reward = 0
             avg_length = 0
 
-def LunarLander_01(rank, world_size):
+def LunarLander_01(rank):
     ############## Hyperparameters ##############
     env_name = "LunarLander-v2"
     # creating environment
@@ -466,14 +466,14 @@ def init_processes_00(rank, world_size, fn, backend='gloo'):
     os.environ['MASTER_ADDR'] = '127.0.0.1' #localhost ip
     os.environ['MASTER_PORT'] = '6900'
     torch.distributed.init_process_group(backend, rank=rank, world_size=world_size)
-    fn(rank, world_size)
+    fn(rank)
 
 #gloo for cpu
 def init_processes_01(rank, world_size, fn, backend='gloo'):
     os.environ['MASTER_ADDR'] = '127.0.0.1' #localhost ip
     os.environ['MASTER_PORT'] = '6900'
     torch.distributed.init_process_group(backend, rank=rank, world_size=world_size)
-    fn(rank, world_size)
+    fn(rank)
 
 if __name__ == "__main__":
     world_size  = 2  # num of processes
