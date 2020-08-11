@@ -359,7 +359,7 @@ def LunarLander_00(rank):
 
         # stop training if avg_reward > solved_reward
         if running_reward > (log_interval * solved_reward):
-            print("########## Solved! ##########")
+            print("########## LunarLander_00 Solved! ##########")
             torch.save(ppo.policy_ac.state_dict(), './DDPPO_00_{}.pth'.format(env_name))
             break
 
@@ -445,7 +445,7 @@ def LunarLander_01(rank):
 
         # stop training if avg_reward > solved_reward
         if running_reward > (log_interval * solved_reward):
-            print("########## Solved! ##########")
+            print("########## LunarLander_01 Solved! ##########")
             torch.save(ppo.policy_ac.state_dict(), './DDPPO_01_{}.pth'.format(env_name))
             break
 
@@ -463,17 +463,23 @@ def LunarLander_01(rank):
 
 #gloo for cpu
 def init_processes_00(rank, world_size, fn, backend='gloo'):
-    os.environ['MASTER_ADDR'] = '127.0.0.1' #localhost ip
-    os.environ['MASTER_PORT'] = '6900'
-    torch.distributed.init_process_group(backend, rank=rank, world_size=world_size)
+    #os.environ['MASTER_ADDR'] = '127.0.0.1' #localhost ip
+    #os.environ['MASTER_PORT'] = '6900'
+    torch.distributed.init_process_group(backend,
+                                         init_method='tcp://127.0.0.1:6900',
+                                         rank=rank,
+                                         world_size=world_size)
     fn(rank)
     torch.distributed.destroy_process_group()
 
 #gloo for cpu
 def init_processes_01(rank, world_size, fn, backend='gloo'):
-    os.environ['MASTER_ADDR'] = '127.0.0.1' #localhost ip
-    os.environ['MASTER_PORT'] = '6900'
-    torch.distributed.init_process_group(backend, rank=rank, world_size=world_size)
+    #os.environ['MASTER_ADDR'] = '127.0.0.1' #localhost ip
+    #os.environ['MASTER_PORT'] = '6900'
+    torch.distributed.init_process_group(backend,
+                                         init_method='tcp://127.0.0.1:6900',
+                                         rank=rank,
+                                         world_size=world_size)
     fn(rank)
     torch.distributed.destroy_process_group()
 
