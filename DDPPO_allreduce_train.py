@@ -467,6 +467,7 @@ def init_processes_00(rank, world_size, fn, backend='gloo'):
     os.environ['MASTER_PORT'] = '6900'
     torch.distributed.init_process_group(backend, rank=rank, world_size=world_size)
     fn(rank)
+    torch.distributed.destroy_process_group()
 
 #gloo for cpu
 def init_processes_01(rank, world_size, fn, backend='gloo'):
@@ -474,6 +475,7 @@ def init_processes_01(rank, world_size, fn, backend='gloo'):
     os.environ['MASTER_PORT'] = '6900'
     torch.distributed.init_process_group(backend, rank=rank, world_size=world_size)
     fn(rank)
+    torch.distributed.destroy_process_group()
 
 if __name__ == "__main__":
     world_size  = 2  # num of processes

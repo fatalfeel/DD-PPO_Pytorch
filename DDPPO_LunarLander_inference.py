@@ -1,5 +1,5 @@
 import gym
-from PPO_LunarLander_train import GameContent, CPPO
+from DDPPO_allreduce_train import GameContent, CPPO_00, CPPO_01
 from PIL import Image
 import torch
 
@@ -23,15 +23,16 @@ if __name__ == '__main__':
 
     # creating environment
     env = gym.make(env_name)
-    dim_states = env.observation_space.shape[0]
-    dim_acts = 4
+    dim_states  = env.observation_space.shape[0]
+    dim_acts    = 4
 
     gamedata    = GameContent()
-    ppo         = CPPO(dim_states, dim_acts, h_neurons, lr, gamma, train_epochs, eps_clip, betas)
+    ppo         = CPPO_00(dim_states, dim_acts, h_neurons, lr, gamma, train_epochs, eps_clip, betas)
+    #ppo         = CPPO_01(dim_states, dim_acts, h_neurons, lr, gamma, train_epochs, eps_clip, betas)
 
     directory   = "./preTrained/"
-    filename    = "PPO_{}.pth".format(env_name)
-    # map_location=torch.device('cpu') for cpu only if you have cuda then cancel it
+    filename    = "DDPPO_{}.pth".format(env_name)
+
     ppo.policy_ac.load_state_dict(torch.load(directory+filename, map_location=torch.device('cpu')))
     
     for ep in range(1, n_episodes+1):
