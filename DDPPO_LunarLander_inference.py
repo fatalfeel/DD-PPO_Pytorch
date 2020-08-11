@@ -1,5 +1,5 @@
 import gym
-from DDPPO_allreduce_train import GameContent, CPPO_00, CPPO_01
+from DDPPO_LunarLander_train import GameContent, CPPO_00, CPPO_01
 from PIL import Image
 import torch
 
