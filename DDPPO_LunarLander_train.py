@@ -1,7 +1,6 @@
 # from https://zhuanlan.zhihu.com/p/51895106
 # Book: Reinforcement Learning with TensorFlow P.88 chapter 3 about X A C +1 -1
 import numpy
-import os
 import torch
 import torch.nn as nn
 import torch.distributions
