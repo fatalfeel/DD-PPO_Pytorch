@@ -18,15 +18,17 @@ if __name__ == '__main__':
     save_gif        = False         # png images are saved in gif folder
     train_epochs    = 40            # update policy for K epochs
     action_std      = 0.5           # constant std for action distribution (Multivariate Normal)
-    gamma           = 0.99  # discount factor
     lr              = 0.0001  # parameters for Adam optimizer
-    eps_clip        = 0.2           # clip parameter for CPPO
     betas           = (0.9, 0.999)
+    gamma           = 0.99  # discount factor
+    eps_clip        = 0.2           # clip parameter for CPPO
+    vloss_coef      = 0.5  # clip parameter for PPO2
+    entropy_coef    = 0.01
     #############################################
     
     gamedata    = GameContent()
-    ppo         = CPPO_00(dim_states, dim_acts, action_std, lr, gamma, train_epochs, eps_clip, betas)
-    #ppo        = CPPO_01(dim_states, dim_acts, action_std, lr, gamma, train_epochs, eps_clip, betas)
+    ppo         = CPPO_00(dim_states, dim_acts, action_std, lr, betas, gamma, train_epochs, eps_clip, vloss_coef, entropy_coef)
+    #ppo        = CPPO_01(dim_states, dim_acts, action_std, lr, betas, gamma, train_epochs, eps_clip, vloss_coef, entropy_coef)
 
     directory = "./preTrained/"
     filename = "DDPPO_{}.pth".format(env_name)

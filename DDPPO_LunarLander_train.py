@@ -102,12 +102,14 @@ class Actor_Critic(nn.Module):
 **************************************************
 '''
 class CPPO_00:
-    def __init__(self, dim_states, dim_acts, h_neurons, lr, gamma, train_epochs, eps_clip, betas):
-        self.lr = lr
-        self.betas = betas
-        self.gamma = gamma
-        self.eps_clip = eps_clip
-        self.train_epochs = train_epochs
+    def __init__(self, dim_states, dim_acts, h_neurons, lr, betas, gamma, train_epochs, eps_clip, vloss_coef, entropy_coef):
+        self.lr             = lr
+        self.betas          = betas
+        self.gamma          = gamma
+        self.eps_clip       = eps_clip
+        self.vloss_coef     = vloss_coef
+        self.entropy_coef   = entropy_coef
+        self.train_epochs   = train_epochs
 
         self.policy_ac = Actor_Critic(dim_states, dim_acts, h_neurons).double().to(device)
         self.optimizer = torch.optim.Adam(self.policy_ac.parameters(), lr=lr, betas=betas)
@@ -178,8 +180,17 @@ class CPPO_00:
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
 
+            # values - value_preds_batch = 0 because we sample all values
+            # value_losses equal value_losses_clipped
+            '''value_pred_clipped = value_preds_batch + (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
+            value_losses = (values - return_batch).pow(2)
+            value_losses_clipped = (value_pred_clipped - return_batch).pow(2)
+            value_loss = 0.5 * torch.max(value_losses, value_losses_clipped).mean()'''
+            value_loss = 0.5 * self.MseLoss(next_critic_values, returns)
+
             # MseLoss is Mean Square Error = (target - output)^2, next_critic_values in first param follow libtorch rules
-            loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(next_critic_values, returns) - 0.01 * entropy
+            #loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(next_critic_values, returns) - 0.01 * entropy
+            loss = -torch.min(surr1, surr2) + self.vloss_coef * value_loss - self.entropy_coef * entropy
 
             # take gradient step
             self.optimizer.zero_grad()
@@ -198,12 +209,14 @@ class CPPO_00:
 **************************************************
 '''
 class CPPO_01:
-    def __init__(self, dim_states, dim_acts, h_neurons, lr, gamma, train_epochs, eps_clip, betas):
-        self.lr = lr
-        self.betas = betas
-        self.gamma = gamma
-        self.eps_clip = eps_clip
-        self.train_epochs = train_epochs
+    def __init__(self, dim_states, dim_acts, h_neurons, lr, betas, gamma, train_epochs, eps_clip, vloss_coef, entropy_coef):
+        self.lr             = lr
+        self.betas          = betas
+        self.gamma          = gamma
+        self.eps_clip       = eps_clip
+        self.vloss_coef     = vloss_coef
+        self.entropy_coef   = entropy_coef
+        self.train_epochs   = train_epochs
 
         self.policy_ac = Actor_Critic(dim_states, dim_acts, h_neurons).double().to(device)
         self.optimizer = torch.optim.Adam(self.policy_ac.parameters(), lr=lr, betas=betas)
@@ -274,8 +287,17 @@ class CPPO_01:
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
 
+            # values - value_preds_batch = 0 because we sample all values
+            # value_losses equal value_losses_clipped
+            '''value_pred_clipped = value_preds_batch + (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
+            value_losses = (values - return_batch).pow(2)
+            value_losses_clipped = (value_pred_clipped - return_batch).pow(2)
+            value_loss = 0.5 * torch.max(value_losses, value_losses_clipped).mean()'''
+            value_loss = 0.5 * self.MseLoss(next_critic_values, returns)
+
             # MseLoss is Mean Square Error = (target - output)^2, next_critic_values in first param follow libtorch rules
-            loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(next_critic_values, returns) - 0.01 * entropy
+            # loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(next_critic_values, returns) - 0.01 * entropy
+            loss = -torch.min(surr1, surr2) + self.vloss_coef * value_loss - self.entropy_coef * entropy
 
             # take gradient step
             self.optimizer.zero_grad()
@@ -301,9 +323,11 @@ def LunarLander_00(rank):
     update_timestep = 2000  # train_update policy every n timesteps
     train_epochs    = 4  # train_update policy for epochs
     lr              = 0.0005  # learning rate
+    betas           = (0.9, 0.999)  # Adam β
     gamma           = 0.99  # discount factor
     eps_clip        = 0.2  # clip parameter for PPO2
-    betas           = (0.9, 0.999)  # Adam β
+    vloss_coef      = 0.5  # clip parameter for PPO2
+    entropy_coef    = 0.01
     predict_trick   = True  # trick shot make PPO get better action & reward
     #############################################
 
@@ -313,7 +337,7 @@ def LunarLander_00(rank):
     dim_acts = 4  # 4 action directions
 
     gamedata = GameContent()
-    ppo = CPPO_00(dim_states, dim_acts, h_neurons, lr, gamma, train_epochs, eps_clip, betas)
+    ppo = CPPO_00(dim_states, dim_acts, h_neurons, lr, betas, gamma, train_epochs, eps_clip, vloss_coef, entropy_coef)
 
     # logging variables
     running_reward = 0
@@ -387,9 +411,11 @@ def LunarLander_01(rank):
     update_timestep = 2000  # train_update policy every n timesteps
     train_epochs    = 4  # train_update policy for epochs
     lr              = 0.0005  # learning rate
+    betas           = (0.9, 0.999)  # Adam β
     gamma           = 0.99  # discount factor
     eps_clip        = 0.2  # clip parameter for PPO2
-    betas           = (0.9, 0.999)  # Adam β
+    vloss_coef      = 0.5  # clip parameter for PPO2
+    entropy_coef    = 0.01
     predict_trick   = True  # trick shot make PPO get better action & reward
     #############################################
 
@@ -399,7 +425,7 @@ def LunarLander_01(rank):
     dim_acts = 4  # 4 action directions
 
     gamedata = GameContent()
-    ppo = CPPO_01(dim_states, dim_acts, h_neurons, lr, gamma, train_epochs, eps_clip, betas)
+    ppo = CPPO_01(dim_states, dim_acts, h_neurons, lr, betas, gamma, train_epochs, eps_clip, vloss_coef, entropy_coef)
 
     # logging variables
     running_reward = 0
