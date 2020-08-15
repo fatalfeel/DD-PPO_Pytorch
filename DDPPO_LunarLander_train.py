@@ -180,16 +180,18 @@ class CPPO_00:
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
 
-            # values - value_preds_batch = 0 because we sample all values
-            # value_losses equal value_losses_clipped
-            '''value_pred_clipped = value_preds_batch + (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
-            value_losses = (values - return_batch).pow(2)
-            value_losses_clipped = (value_pred_clipped - return_batch).pow(2)
-            value_loss = 0.5 * torch.max(value_losses, value_losses_clipped).mean()'''
-            value_loss = 0.5 * self.MseLoss(next_critic_values, returns)
+            # value_losses equal value_losses_clipped in first time
+            ''' value_pred_clipped = value_preds_batch + (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
+                value_losses_clipped = (value_pred_clipped - return_batch).pow(2)
+                value_losses = (values - return_batch).pow(2)
+                value_loss = 0.5 * torch.max(value_losses,value_losses_clipped).mean() '''
+            value_predict_clip  = critic_vpi.detach() + (next_critic_values - critic_vpi.detach()).clamp(-self.eps_clip, self.eps_clip)
+            value_predict_loss  = self.MseLoss(value_predict_clip, returns)
+            value_critic_loss   = self.MseLoss(next_critic_values, returns)
+            value_loss          = 0.5 * torch.max(value_predict_loss, value_critic_loss)  # combine 2 biggest loss, not pick one of them
 
             # MseLoss is Mean Square Error = (target - output)^2, next_critic_values in first param follow libtorch rules
-            #loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(next_critic_values, returns) - 0.01 * entropy
+            # loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(next_critic_values, returns) - 0.01 * entropy
             loss = -torch.min(surr1, surr2) + self.vloss_coef * value_loss - self.entropy_coef * entropy
 
             # take gradient step
@@ -287,13 +289,15 @@ class CPPO_01:
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
 
-            # values - value_preds_batch = 0 because we sample all values
-            # value_losses equal value_losses_clipped
-            '''value_pred_clipped = value_preds_batch + (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
-            value_losses = (values - return_batch).pow(2)
-            value_losses_clipped = (value_pred_clipped - return_batch).pow(2)
-            value_loss = 0.5 * torch.max(value_losses, value_losses_clipped).mean()'''
-            value_loss = 0.5 * self.MseLoss(next_critic_values, returns)
+            # value_losses equal value_losses_clipped in first time
+            ''' value_pred_clipped = value_preds_batch + (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
+                value_losses_clipped = (value_pred_clipped - return_batch).pow(2)
+                value_losses = (values - return_batch).pow(2)
+                value_loss = 0.5 * torch.max(value_losses,value_losses_clipped).mean() '''
+            value_predict_clip  = critic_vpi.detach() + (next_critic_values - critic_vpi.detach()).clamp(-self.eps_clip, self.eps_clip)
+            value_predict_loss  = self.MseLoss(value_predict_clip, returns)
+            value_critic_loss   = self.MseLoss(next_critic_values, returns)
+            value_loss          = 0.5 * torch.max(value_predict_loss, value_critic_loss)  # combine 2 biggest loss, not pick one of them
 
             # MseLoss is Mean Square Error = (target - output)^2, next_critic_values in first param follow libtorch rules
             # loss = -torch.min(surr1, surr2) + 0.5 * self.MseLoss(next_critic_values, returns) - 0.01 * entropy
