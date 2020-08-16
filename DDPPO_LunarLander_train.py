@@ -180,7 +180,7 @@ class CPPO_00:
             surr1 = ratios * advantages
             surr2 = torch.clamp(ratios, 1 - self.eps_clip, 1 + self.eps_clip) * advantages
 
-            # value_losses equal value_losses_clipped in first time
+            #we get all samples of critic_values, so value_preds_batch equal critic_values
             ''' value_pred_clipped = value_preds_batch + (values - value_preds_batch).clamp(-self.clip_param, self.clip_param)
                 value_losses_clipped = (value_pred_clipped - return_batch).pow(2)
                 value_losses = (values - return_batch).pow(2)
